@@ -6,5 +6,6 @@ export const config = {
   voiceReplyEnabled: process.env.VOICE_REPLY_ENABLED === 'true',
   voiceName: process.env.VOICE_NAME || 'en-US-JennyNeural',
   allowedNumbers: process.env.ALLOWED_NUMBERS ? process.env.ALLOWED_NUMBERS.split(',').map(s => s.trim()) : [],
+  selfChatOnly: process.env.SELF_CHAT_ONLY !== 'false', // Padrão: true (responde apenas na conversa consigo mesmo)
   sessionPath: './auth_info_baileys',
 };

@@ -89,8 +89,11 @@ export async function startWhatsAppBot() {
         (myLid && senderJid === `${myLid}@lid`) ||
         senderJid.startsWith(myNumber);
 
-      // Log para diagnóstico em tempo real
-      console.log(`[WhatsApp Event] type=${type}, senderJid=${senderJid}, fromMe=${msg.key.fromMe}, isSelfChat=${isSelfChat}`);
+      // Se selfChatOnly estiver ativado, processa EXCLUSIVAMENTE o chat de notas consigo mesmo ("Você")
+      // Isso impede 100% que o bot responda a conversas com colegas, amigos ou clientes!
+      if (config.selfChatOnly && !isSelfChat) {
+        continue;
+      }
 
       // Se a mensagem foi enviada por mim mas NÃO foi no meu próprio chat de anotações, ignora
       if (msg.key.fromMe && !isSelfChat) continue;

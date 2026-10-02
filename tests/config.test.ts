@@ -16,4 +16,8 @@ describe('Config Module Tests', () => {
   it('should default session path to auth_info_baileys', () => {
     assert.strictEqual(config.sessionPath, './auth_info_baileys');
   });
+
+  it('should have selfChatOnly setting', () => {
+    assert.strictEqual(typeof config.selfChatOnly, 'boolean');
+  });
 });
