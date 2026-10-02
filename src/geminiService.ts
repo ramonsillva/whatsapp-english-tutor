@@ -68,12 +68,27 @@ export async function processUserMessage(
     });
   }
 
-  const interaction = await ai.interactions.create({
-    model: 'gemini-3.8-flash',
-    system_instruction: SYSTEM_INSTRUCTION,
-    input: inputParts,
-    previous_interaction_id: previousInteractionId,
-  });
+  let interaction;
+  try {
+    interaction = await ai.interactions.create({
+      model: 'gemini-3.5-flash-lite',
+      system_instruction: SYSTEM_INSTRUCTION,
+      input: inputParts,
+      previous_interaction_id: previousInteractionId,
+    });
+  } catch (err: any) {
+    if (err?.status === 429 || err?.message?.includes('Rate limit')) {
+      console.log('[Gemini] Rate limit no gemini-3.5-flash-lite, tentando gemini-3.1-flash-lite...');
+      interaction = await ai.interactions.create({
+        model: 'gemini-3.1-flash-lite',
+        system_instruction: SYSTEM_INSTRUCTION,
+        input: inputParts,
+        previous_interaction_id: previousInteractionId,
+      });
+    } else {
+      throw err;
+    }
+  }
 
   if (interaction.id) {
     userInteractions.set(userId, interaction.id);
