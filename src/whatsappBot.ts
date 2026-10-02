@@ -52,21 +52,6 @@ export async function startWhatsAppBot() {
       console.log(' Conectado com sucesso ao WhatsApp!');
       console.log('💬 O Tutor de Inglês está pronto para bater papo!');
       console.log('======================================================\n');
-
-      // Dispara a mensagem inicial convidativa diretamente para você (Ramon)
-      try {
-        const myJid = sock.user?.id ? sock.user.id.split(':')[0] + '@s.whatsapp.net' : null;
-        if (myJid) {
-          console.log(`[WhatsApp] Disparando mensagem de boas-vindas para ${myJid}...`);
-          const welcomeText = "Hey Ramon! Tell me one thing about your week, in English. Pode errar à vontade, é assim que funciona! Eu corrijo no meio do papo, tipo uma amiga que manja. Let's do this! 🚀";
-          const sentWelcome = await sock.sendMessage(myJid, { text: welcomeText });
-          if (sentWelcome?.key?.id) {
-            botSentMessageIds.add(sentWelcome.key.id);
-          }
-        }
-      } catch (welcomeErr) {
-        console.error('Erro ao enviar mensagem de boas-vindas:', welcomeErr);
-      }
     }
   });
 
@@ -79,24 +64,28 @@ export async function startWhatsAppBot() {
       if (!senderJid || senderJid.endsWith('@g.us') || senderJid.endsWith('@newsletter')) continue;
 
       const myJid = sock.user?.id || '';
-      const myNumber = myJid.split(':')[0];
-      const myLid = sock.user?.lid ? sock.user.lid.split(':')[0] : '';
-      const senderNumber = senderJid.replace('@s.whatsapp.net', '').replace('@lid', '');
+      const myNumber = myJid.split(':')[0].replace(/[^0-9]/g, '');
+      const myLid = sock.user?.lid ? sock.user.lid.split(':')[0].replace(/[^0-9]/g, '') : '';
+      const senderRaw = senderJid.split('@')[0].split(':')[0].replace(/[^0-9]/g, '');
+      const senderNumber = senderRaw;
 
-      // Verifica se é self-chat (chat de anotações consigo mesmo)
-      const isSelfChat =
-        senderJid === `${myNumber}@s.whatsapp.net` ||
-        (myLid && senderJid === `${myLid}@lid`) ||
-        senderJid.startsWith(myNumber);
+      // Verifica se a mensagem veio estritamente da conversa de "Mensagens Salvas" consigo mesmo ("Você")
+      const isSelfChat = (myNumber && senderRaw === myNumber) || (myLid && senderRaw === myLid);
 
-      // Se selfChatOnly estiver ativado, processa EXCLUSIVAMENTE o chat de notas consigo mesmo ("Você")
-      // Isso impede 100% que o bot responda a conversas com colegas, amigos ou clientes!
+      // Trava de segurança máxima: se selfChatOnly for true ou se não for o chat próprio, IGNORA IMEDIATAMENTE
       if (config.selfChatOnly && !isSelfChat) {
         continue;
       }
 
-      // Se a mensagem foi enviada por mim mas NÃO foi no meu próprio chat de anotações, ignora
-      if (msg.key.fromMe && !isSelfChat) continue;
+      // Se você estiver conversando com um colega/amigo (fromMe é true mas não é no seu chat de anotações), NUNCA INTERCEPTA
+      if (msg.key.fromMe && !isSelfChat) {
+        continue;
+      }
+
+      // Se alguém de fora mandou mensagem (colega, parente, etc), NUNCA RESPONDE se não for self-chat
+      if (!isSelfChat) {
+        continue;
+      }
 
       // Extração robusta do conteúdo de mensagem
       const messageContent =
@@ -180,9 +169,6 @@ export async function startWhatsAppBot() {
         }
       } catch (err: any) {
         console.error('Erro ao processar mensagem do usuário:', err);
-        await sock.sendMessage(senderJid, {
-          text: `Ops, tive um probleminha para processar isso: ${err.message || 'Erro inesperado'}.`,
-        });
       }
     }
   });
