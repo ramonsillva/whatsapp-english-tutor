@@ -5,7 +5,7 @@ import path from 'path';
 import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
 import { processUserMessage } from './geminiService.js';
-import { synthesizeSpeech } from './ttsService.js';
+import { synthesizeSpeechBuffer } from './ttsService.js';
 import { config } from './config.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -45,11 +45,9 @@ app.post('/api/chat', upload.single('audio'), async (req, res) => {
     let audioUrl: string | null = null;
     if (config.voiceReplyEnabled) {
       try {
-        const audioFilePath = await synthesizeSpeech(replyText);
-        const audioBuffer = await fs.readFile(audioFilePath);
+        const audioBuffer = await synthesizeSpeechBuffer(replyText);
         const base64Voice = audioBuffer.toString('base64');
         audioUrl = `data:audio/mp3;base64,${base64Voice}`;
-        await fs.unlink(audioFilePath).catch(() => {});
       } catch (err) {
         console.error('Erro ao gerar voz:', err);
       }

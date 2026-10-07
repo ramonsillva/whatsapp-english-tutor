@@ -1,13 +1,32 @@
 import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
-import path from 'path';
-import os from 'os';
 import { config } from './config.js';
 
-export async function synthesizeSpeech(text: string): Promise<string> {
+export async function synthesizeSpeechBuffer(text: string): Promise<Buffer> {
   const tts = new MsEdgeTTS();
   await tts.setMetadata(config.voiceName, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
 
-  const tempFile = path.join(os.tmpdir(), `tts_${Date.now()}_${Math.random().toString(36).substring(7)}.mp3`);
-  await tts.toFile(tempFile, text);
-  return tempFile;
+  return new Promise((resolve, reject) => {
+    try {
+      const { audioStream } = tts.toStream(text);
+      const chunks: Buffer[] = [];
+
+      audioStream.on('data', (chunk) => {
+        if (Buffer.isBuffer(chunk)) {
+          chunks.push(chunk);
+        } else {
+          chunks.push(Buffer.from(chunk));
+        }
+      });
+
+      audioStream.on('end', () => {
+        resolve(Buffer.concat(chunks));
+      });
+
+      audioStream.on('error', (err) => {
+        reject(err);
+      });
+    } catch (err) {
+      reject(err);
+    }
+  });
 }
