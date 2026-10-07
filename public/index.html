@@ -2,148 +2,217 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Alex - English Tutor</title>
+  <!-- Markdown parser limpo e seguro -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }
 
     body {
-      background-color: #0b141a;
+      background-color: #0c1317;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
       color: #e9edef;
     }
 
     .chat-container {
       width: 100%;
-      max-width: 500px;
-      height: 100vh;
+      max-width: 540px;
+      height: 100dvh;
       display: flex;
       flex-direction: column;
-      background-color: #0b141a;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      background-color: #0c1317;
       position: relative;
     }
 
-    @media (min-width: 550px) {
+    @media (min-width: 600px) {
       .chat-container {
-        height: 94vh;
-        border-radius: 12px;
+        height: 94dvh;
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+        border: 1px solid #222d34;
         overflow: hidden;
       }
     }
 
-    /* Top bar */
+    /* Top bar estilo WhatsApp */
     .header {
       background-color: #202c33;
       padding: 10px 16px;
       display: flex;
       align-items: center;
       gap: 12px;
-      border-bottom: 1px solid #222d34;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      z-index: 10;
     }
 
     .avatar {
-      width: 42px;
-      height: 42px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       background: linear-gradient(135deg, #00a884, #005c4b);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: bold;
-      font-size: 18px;
+      font-weight: 600;
+      font-size: 19px;
       color: white;
+      flex-shrink: 0;
     }
 
     .header-info {
       flex: 1;
+      min-width: 0;
     }
 
     .header-info h2 {
-      font-size: 16px;
-      font-weight: 500;
+      font-size: 16.5px;
+      font-weight: 600;
       color: #e9edef;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .header-info p {
-      font-size: 12px;
+      font-size: 12.5px;
       color: #00a884;
+      font-weight: 500;
     }
 
-    /* Message list */
+    /* Messages Area */
     .messages-area {
       flex: 1;
-      padding: 16px;
+      padding: 16px 14px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      background-image: radial-gradient(#202c33 1px, transparent 1px);
-      background-size: 20px 20px;
+      gap: 10px;
+      background-color: #0b141a;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+      background-size: 24px 24px;
+      scroll-behavior: smooth;
     }
 
-    .message {
-      max-width: 80%;
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 14.2px;
-      line-height: 1.45;
-      position: relative;
-      word-wrap: break-word;
-      animation: fadeIn 0.2s ease-in-out;
+    .message-wrapper {
+      display: flex;
+      flex-direction: column;
+      max-width: 86%;
+      animation: fadeIn 0.18s ease-out;
+    }
+
+    .message-wrapper.bot {
+      align-self: flex-start;
+    }
+
+    .message-wrapper.user {
+      align-self: flex-end;
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(4px); }
+      from { opacity: 0; transform: translateY(6px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Bot messages (Left - White/Gray) */
-    .message.bot {
-      align-self: flex-start;
+    .message-bubble {
+      padding: 10px 14px 6px 14px;
+      border-radius: 10px;
+      font-size: 14.8px;
+      line-height: 1.5;
+      word-break: break-word;
+      position: relative;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+
+    /* Bot Message: LADO ESQUERDO (Cinza / Branco WhatsApp Escuro) */
+    .message-wrapper.bot .message-bubble {
       background-color: #202c33;
       color: #e9edef;
-      border-top-left-radius: 0;
+      border-top-left-radius: 2px;
     }
 
-    /* User messages (Right - Green) */
-    .message.user {
-      align-self: flex-end;
+    /* User Message: LADO DIREITO (Verde WhatsApp) */
+    .message-wrapper.user .message-bubble {
       background-color: #005c4b;
       color: #e9edef;
-      border-top-right-radius: 0;
+      border-top-right-radius: 2px;
     }
 
-    .message-time {
-      font-size: 11px;
-      color: rgba(255, 255, 255, 0.5);
+    /* Formatação limpa de Markdown dentro da mensagem */
+    .message-content p {
+      margin-bottom: 8px;
+    }
+    .message-content p:last-child {
+      margin-bottom: 0;
+    }
+    .message-content strong {
+      color: #25d366;
+      font-weight: 600;
+    }
+    .message-wrapper.user .message-content strong {
+      color: #ffffff;
+    }
+    .message-content em {
+      color: #d1d7db;
+      font-style: italic;
+    }
+    .message-content ul, .message-content ol {
+      margin-left: 20px;
+      margin-bottom: 8px;
+    }
+    .message-content code {
+      background-color: rgba(0, 0, 0, 0.25);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13.5px;
+    }
+
+    /* Hora e Status */
+    .message-meta {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 4px;
       margin-top: 4px;
-      text-align: right;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.55);
     }
 
-    .audio-player {
-      margin-top: 6px;
+    /* Player de áudio moderno e elegante */
+    .audio-container {
+      margin-top: 8px;
+      padding: 6px 8px;
+      background-color: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .audio-container audio {
       width: 100%;
       height: 36px;
       outline: none;
-      border-radius: 18px;
     }
 
-    /* Input area */
+    /* Footer / Input Bar */
     .footer {
       background-color: #202c33;
-      padding: 8px 12px;
+      padding: 8px 10px;
       display: flex;
       align-items: center;
       gap: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     .input-box {
@@ -151,10 +220,11 @@
       background-color: #2a3942;
       border: none;
       outline: none;
-      padding: 10px 14px;
-      border-radius: 20px;
+      padding: 12px 16px;
+      border-radius: 24px;
       color: #e9edef;
       font-size: 15px;
+      line-height: 1.3;
     }
 
     .input-box::placeholder {
@@ -165,19 +235,19 @@
       background: none;
       border: none;
       cursor: pointer;
-      width: 42px;
-      height: 42px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       color: #8696a0;
-      transition: all 0.2s;
+      transition: background 0.15s, transform 0.1s;
+      flex-shrink: 0;
     }
 
-    .btn-action:hover {
-      background-color: #374248;
-      color: #e9edef;
+    .btn-action:active {
+      transform: scale(0.92);
     }
 
     .btn-send {
@@ -187,57 +257,96 @@
 
     .btn-send:hover {
       background-color: #02906f;
-      color: white;
     }
 
     .btn-recording {
       background-color: #ea4335 !important;
       color: white !important;
-      animation: pulse 1s infinite alternate;
+      animation: pulse 1s infinite alternate ease-in-out;
     }
 
     @keyframes pulse {
       from { transform: scale(1); }
-      to { transform: scale(1.1); }
+      to { transform: scale(1.12); }
     }
 
-    .loading-indicator {
+    /* Indicador de digitando estilo WhatsApp */
+    .typing-indicator {
       align-self: flex-start;
       background-color: #202c33;
-      padding: 8px 14px;
+      padding: 8px 16px;
       border-radius: 12px;
-      font-size: 13px;
-      color: #8696a0;
       display: none;
+      align-items: center;
+      gap: 6px;
+      color: #8696a0;
+      font-size: 13.5px;
+    }
+
+    .typing-dots {
+      display: flex;
+      gap: 4px;
+    }
+
+    .typing-dots span {
+      width: 5px;
+      height: 5px;
+      background-color: #8696a0;
+      border-radius: 50%;
+      animation: bounce 1.4s infinite ease-in-out both;
+    }
+
+    .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1); }
     }
   </style>
 </head>
 <body>
 
   <div class="chat-container">
+    <!-- Header -->
     <div class="header">
       <div class="avatar">A</div>
       <div class="header-info">
         <h2>Alex (English Tutor)</h2>
-        <p>Online • Conversational Recast</p>
+        <p>Online • Conversational Partner</p>
       </div>
     </div>
 
+    <!-- Messages -->
     <div class="messages-area" id="messagesArea">
-      <!-- Mensagem Inicial da IA no LADO ESQUERDO -->
-      <div class="message bot">
-        Hey Ramon! Tell me one thing about your week, in English. Pode errar à vontade, é assim que funciona! Eu corrijo no meio do papo, tipo uma amiga que manja. 🚀
-        <div class="message-time" id="initTime"></div>
+      <!-- Boas-vindas (lado esquerdo) -->
+      <div class="message-wrapper bot">
+        <div class="message-bubble">
+          <div class="message-content">
+            <p>Hey Ramon! Tell me one thing about your week, in English. 💬</p>
+            <p>Pode errar à vontade, é assim que funciona! Eu corrijo no meio do papo, tipo uma amiga nativa que manja. <em>Let's do this!</em> 🚀</p>
+          </div>
+          <div class="message-meta">
+            <span id="initTime"></span>
+          </div>
+        </div>
       </div>
-      <div class="loading-indicator" id="loadingIndicator">Alex está digitando...</div>
+
+      <div class="typing-indicator" id="typingIndicator">
+        <span>Alex está pensando</span>
+        <div class="typing-dots">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
     </div>
 
+    <!-- Footer -->
     <div class="footer">
       <input 
         type="text" 
         id="textInput" 
         class="input-box" 
-        placeholder="Digite em inglês ou aperte no microfone..." 
+        placeholder="Mensagem em inglês..." 
         autocomplete="off"
       />
       <button id="micBtn" class="btn-action" title="Gravar Áudio">
@@ -259,7 +368,7 @@
     const textInput = document.getElementById('textInput');
     const sendBtn = document.getElementById('sendBtn');
     const micBtn = document.getElementById('micBtn');
-    const loadingIndicator = document.getElementById('loadingIndicator');
+    const typingIndicator = document.getElementById('typingIndicator');
 
     document.getElementById('initTime').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -267,22 +376,44 @@
     let audioChunks = [];
     let isRecording = false;
 
+    // Configuração do marked para quebras de linha perfeitas
+    marked.setOptions({
+      breaks: true,
+      gfm: true
+    });
+
     function formatTime() {
       return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
-    function addMessage(text, sender, audioUrl = null) {
-      const msgDiv = document.createElement('div');
-      msgDiv.className = `message ${sender}`;
-      
-      let html = `<div>${text.replace(/\n/g, '<br>')}</div>`;
+    function addMessage(rawText, sender, audioUrl = null) {
+      const wrapper = document.createElement('div');
+      wrapper.className = `message-wrapper ${sender}`;
+
+      const bubble = document.createElement('div');
+      bubble.className = 'message-bubble';
+
+      const content = document.createElement('div');
+      content.className = 'message-content';
+      content.innerHTML = marked.parse(rawText || '');
+
+      bubble.appendChild(content);
+
       if (audioUrl) {
-        html += `<audio class="audio-player" controls autoplay src="${audioUrl}"></audio>`;
+        const audioContainer = document.createElement('div');
+        audioContainer.className = 'audio-container';
+        audioContainer.innerHTML = `<audio controls autoplay src="${audioUrl}"></audio>`;
+        bubble.appendChild(audioContainer);
       }
-      html += `<div class="message-time">${formatTime()}</div>`;
-      
-      msgDiv.innerHTML = html;
-      messagesArea.insertBefore(msgDiv, loadingIndicator);
+
+      const meta = document.createElement('div');
+      meta.className = 'message-meta';
+      meta.innerHTML = `<span>${formatTime()}</span>`;
+      bubble.appendChild(meta);
+
+      wrapper.appendChild(bubble);
+
+      messagesArea.insertBefore(wrapper, typingIndicator);
       messagesArea.scrollTop = messagesArea.scrollHeight;
     }
 
@@ -293,10 +424,10 @@
         addMessage(text, 'user');
         textInput.value = '';
       } else if (audioBlob) {
-        addMessage('🎤 [Mensagem de Voz]', 'user');
+        addMessage('🎤 *Mensagem de áudio enviada*', 'user');
       }
 
-      loadingIndicator.style.display = 'block';
+      typingIndicator.style.display = 'flex';
       messagesArea.scrollTop = messagesArea.scrollHeight;
 
       try {
@@ -310,14 +441,14 @@
         });
 
         const data = await res.json();
-        loadingIndicator.style.display = 'none';
+        typingIndicator.style.display = 'none';
 
         if (data.replyText) {
           addMessage(data.replyText, 'bot', data.audioUrl);
         }
       } catch (err) {
-        loadingIndicator.style.display = 'none';
-        addMessage('Ops, tive um errinho de conexão. Tenta de novo?', 'bot');
+        typingIndicator.style.display = 'none';
+        addMessage('Ops, tive um errinho de conexão. Pode tentar novamente?', 'bot');
         console.error(err);
       }
     }
@@ -334,7 +465,7 @@
       }
     });
 
-    // Gravação de voz
+    // Gravação de microfone
     micBtn.addEventListener('click', async () => {
       if (!isRecording) {
         try {
@@ -356,7 +487,7 @@
           isRecording = true;
           micBtn.classList.add('btn-recording');
         } catch (err) {
-          alert('Permissão de microfone negada ou indisponível.');
+          alert('Microfone não autorizado ou indisponível.');
           console.error(err);
         }
       } else {
