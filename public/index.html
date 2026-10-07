@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alex - English Tutor</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: #0b141a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: #e9edef;
+    }
+
+    .chat-container {
+      width: 100%;
+      max-width: 500px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-color: #0b141a;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      position: relative;
+    }
+
+    @media (min-width: 550px) {
+      .chat-container {
+        height: 94vh;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+    }
+
+    /* Top bar */
+    .header {
+      background-color: #202c33;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid #222d34;
+    }
+
+    .avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00a884, #005c4b);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 18px;
+      color: white;
+    }
+
+    .header-info {
+      flex: 1;
+    }
+
+    .header-info h2 {
+      font-size: 16px;
+      font-weight: 500;
+      color: #e9edef;
+    }
+
+    .header-info p {
+      font-size: 12px;
+      color: #00a884;
+    }
+
+    /* Message list */
+    .messages-area {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background-image: radial-gradient(#202c33 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
+    .message {
+      max-width: 80%;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14.2px;
+      line-height: 1.45;
+      position: relative;
+      word-wrap: break-word;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Bot messages (Left - White/Gray) */
+    .message.bot {
+      align-self: flex-start;
+      background-color: #202c33;
+      color: #e9edef;
+      border-top-left-radius: 0;
+    }
+
+    /* User messages (Right - Green) */
+    .message.user {
+      align-self: flex-end;
+      background-color: #005c4b;
+      color: #e9edef;
+      border-top-right-radius: 0;
+    }
+
+    .message-time {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.5);
+      margin-top: 4px;
+      text-align: right;
+    }
+
+    .audio-player {
+      margin-top: 6px;
+      width: 100%;
+      height: 36px;
+      outline: none;
+      border-radius: 18px;
+    }
+
+    /* Input area */
+    .footer {
+      background-color: #202c33;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .input-box {
+      flex: 1;
+      background-color: #2a3942;
+      border: none;
+      outline: none;
+      padding: 10px 14px;
+      border-radius: 20px;
+      color: #e9edef;
+      font-size: 15px;
+    }
+
+    .input-box::placeholder {
+      color: #8696a0;
+    }
+
+    .btn-action {
+      background: none;
+      border: none;
+      cursor: pointer;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #8696a0;
+      transition: all 0.2s;
+    }
+
+    .btn-action:hover {
+      background-color: #374248;
+      color: #e9edef;
+    }
+
+    .btn-send {
+      background-color: #00a884;
+      color: white;
+    }
+
+    .btn-send:hover {
+      background-color: #02906f;
+      color: white;
+    }
+
+    .btn-recording {
+      background-color: #ea4335 !important;
+      color: white !important;
+      animation: pulse 1s infinite alternate;
+    }
+
+    @keyframes pulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.1); }
+    }
+
+    .loading-indicator {
+      align-self: flex-start;
+      background-color: #202c33;
+      padding: 8px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      color: #8696a0;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="chat-container">
+    <div class="header">
+      <div class="avatar">A</div>
+      <div class="header-info">
+        <h2>Alex (English Tutor)</h2>
+        <p>Online • Conversational Recast</p>
+      </div>
+    </div>
+
+    <div class="messages-area" id="messagesArea">
+      <!-- Mensagem Inicial da IA no LADO ESQUERDO -->
+      <div class="message bot">
+        Hey Ramon! Tell me one thing about your week, in English. Pode errar à vontade, é assim que funciona! Eu corrijo no meio do papo, tipo uma amiga que manja. 🚀
+        <div class="message-time" id="initTime"></div>
+      </div>
+      <div class="loading-indicator" id="loadingIndicator">Alex está digitando...</div>
+    </div>
+
+    <div class="footer">
+      <input 
+        type="text" 
+        id="textInput" 
+        class="input-box" 
+        placeholder="Digite em inglês ou aperte no microfone..." 
+        autocomplete="off"
+      />
+      <button id="micBtn" class="btn-action" title="Gravar Áudio">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+          <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+        </svg>
+      </button>
+      <button id="sendBtn" class="btn-action btn-send" title="Enviar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const messagesArea = document.getElementById('messagesArea');
+    const textInput = document.getElementById('textInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const micBtn = document.getElementById('micBtn');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+
+    document.getElementById('initTime').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    let mediaRecorder;
+    let audioChunks = [];
+    let isRecording = false;
+
+    function formatTime() {
+      return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function addMessage(text, sender, audioUrl = null) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `message ${sender}`;
+      
+      let html = `<div>${text.replace(/\n/g, '<br>')}</div>`;
+      if (audioUrl) {
+        html += `<audio class="audio-player" controls autoplay src="${audioUrl}"></audio>`;
+      }
+      html += `<div class="message-time">${formatTime()}</div>`;
+      
+      msgDiv.innerHTML = html;
+      messagesArea.insertBefore(msgDiv, loadingIndicator);
+      messagesArea.scrollTop = messagesArea.scrollHeight;
+    }
+
+    async function sendMessage(text = '', audioBlob = null) {
+      if (!text && !audioBlob) return;
+
+      if (text) {
+        addMessage(text, 'user');
+        textInput.value = '';
+      } else if (audioBlob) {
+        addMessage('🎤 [Mensagem de Voz]', 'user');
+      }
+
+      loadingIndicator.style.display = 'block';
+      messagesArea.scrollTop = messagesArea.scrollHeight;
+
+      try {
+        const formData = new FormData();
+        if (text) formData.append('text', text);
+        if (audioBlob) formData.append('audio', audioBlob, 'audio.webm');
+
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await res.json();
+        loadingIndicator.style.display = 'none';
+
+        if (data.replyText) {
+          addMessage(data.replyText, 'bot', data.audioUrl);
+        }
+      } catch (err) {
+        loadingIndicator.style.display = 'none';
+        addMessage('Ops, tive um errinho de conexão. Tenta de novo?', 'bot');
+        console.error(err);
+      }
+    }
+
+    sendBtn.addEventListener('click', () => {
+      const val = textInput.value.trim();
+      if (val) sendMessage(val);
+    });
+
+    textInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const val = textInput.value.trim();
+        if (val) sendMessage(val);
+      }
+    });
+
+    // Gravação de voz
+    micBtn.addEventListener('click', async () => {
+      if (!isRecording) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+
+          mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) audioChunks.push(e.data);
+          };
+
+          mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            sendMessage('', audioBlob);
+            stream.getTracks().forEach(track => track.stop());
+          };
+
+          mediaRecorder.start();
+          isRecording = true;
+          micBtn.classList.add('btn-recording');
+        } catch (err) {
+          alert('Permissão de microfone negada ou indisponível.');
+          console.error(err);
+        }
+      } else {
+        mediaRecorder.stop();
+        isRecording = false;
+        micBtn.classList.remove('btn-recording');
+      }
+    });
+  </script>
+</body>
+</html>
