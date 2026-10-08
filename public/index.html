@@ -315,23 +315,15 @@
         <h2>Alex (English Tutor)</h2>
         <p>Online • Conversational Partner</p>
       </div>
+      <button id="clearChatBtn" class="btn-action" title="Reiniciar conversa" style="width: 36px; height: 36px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+        </svg>
+      </button>
     </div>
 
     <!-- Messages -->
     <div class="messages-area" id="messagesArea">
-      <!-- Boas-vindas (lado esquerdo) -->
-      <div class="message-wrapper bot">
-        <div class="message-bubble">
-          <div class="message-content">
-            <p>Hey Ramon! Tell me one thing about your week, in English. 💬</p>
-            <p>Pode errar à vontade, é assim que funciona! Eu corrijo no meio do papo, tipo uma amiga nativa que manja. <em>Let's do this!</em> 🚀</p>
-          </div>
-          <div class="message-meta">
-            <span id="initTime"></span>
-          </div>
-        </div>
-      </div>
-
       <div class="typing-indicator" id="typingIndicator">
         <span>Alex está pensando</span>
         <div class="typing-dots">
@@ -368,9 +360,10 @@
     const textInput = document.getElementById('textInput');
     const sendBtn = document.getElementById('sendBtn');
     const micBtn = document.getElementById('micBtn');
+    const clearChatBtn = document.getElementById('clearChatBtn');
     const typingIndicator = document.getElementById('typingIndicator');
 
-    document.getElementById('initTime').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const STORAGE_KEY = 'alex_chat_history_v1';
 
     let mediaRecorder;
     let audioChunks = [];
@@ -382,11 +375,92 @@
       gfm: true
     });
 
-    function formatTime() {
-      return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    function formatTime(timestamp = null) {
+      const date = timestamp ? new Date(timestamp) : new Date();
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
-    function addMessage(rawText, sender, audioUrl = null) {
+    function getHistory() {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        return stored ? JSON.parse(stored) : [];
+      } catch (e) {
+        console.error('Erro ao ler histórico:', e);
+        return [];
+      }
+    }
+
+    function saveHistory(messages) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+      } catch (e) {
+        console.error('Erro ao salvar histórico:', e);
+      }
+    }
+
+    function renderMessage(item) {
+      const wrapper = document.createElement('div');
+      wrapper.className = `message-wrapper ${item.sender}`;
+
+      const bubble = document.createElement('div');
+      bubble.className = 'message-bubble';
+
+      const content = document.createElement('div');
+      content.className = 'message-content';
+      content.innerHTML = marked.parse(item.text || '');
+
+      bubble.appendChild(content);
+
+      if (item.audioUrl) {
+        const audioContainer = document.createElement('div');
+        audioContainer.className = 'audio-container';
+        // Não coloca autoplay ao carregar do histórico
+        audioContainer.innerHTML = `<audio controls src="${item.audioUrl}"></audio>`;
+        bubble.appendChild(audioContainer);
+      }
+
+      const meta = document.createElement('div');
+      meta.className = 'message-meta';
+      meta.innerHTML = `<span>${formatTime(item.timestamp)}</span>`;
+      bubble.appendChild(meta);
+
+      wrapper.appendChild(bubble);
+      messagesArea.insertBefore(wrapper, typingIndicator);
+    }
+
+    function loadInitialHistory() {
+      const history = getHistory();
+      if (history.length === 0) {
+        // Mensagem inicial padrão caso não haja histórico
+        const welcome = {
+          text: "Hey Ramon! Tell me one thing about your week, in English. 💬\n\nPode errar à vontade, é assim que funciona! Eu corrijo no meio do papo, tipo uma amiga nativa que manja. *Let's do this!* 🚀",
+          sender: 'bot',
+          audioUrl: null,
+          timestamp: Date.now()
+        };
+        saveHistory([welcome]);
+        renderMessage(welcome);
+      } else {
+        // Renderiza todo o histórico existente
+        history.forEach(item => renderMessage(item));
+      }
+      messagesArea.scrollTop = messagesArea.scrollHeight;
+    }
+
+    function addMessage(rawText, sender, audioUrl = null, autoPlayAudio = true) {
+      const msgItem = {
+        text: rawText,
+        sender: sender,
+        audioUrl: audioUrl,
+        timestamp: Date.now()
+      };
+
+      // Salva no localStorage
+      const history = getHistory();
+      history.push(msgItem);
+      saveHistory(history);
+
+      // Renderiza na tela
       const wrapper = document.createElement('div');
       wrapper.className = `message-wrapper ${sender}`;
 
@@ -402,19 +476,32 @@
       if (audioUrl) {
         const audioContainer = document.createElement('div');
         audioContainer.className = 'audio-container';
-        audioContainer.innerHTML = `<audio controls autoplay src="${audioUrl}"></audio>`;
+        audioContainer.innerHTML = `<audio controls ${autoPlayAudio ? 'autoplay' : ''} src="${audioUrl}"></audio>`;
         bubble.appendChild(audioContainer);
       }
 
       const meta = document.createElement('div');
       meta.className = 'message-meta';
-      meta.innerHTML = `<span>${formatTime()}</span>`;
+      meta.innerHTML = `<span>${formatTime(msgItem.timestamp)}</span>`;
       bubble.appendChild(meta);
 
       wrapper.appendChild(bubble);
 
       messagesArea.insertBefore(wrapper, typingIndicator);
       messagesArea.scrollTop = messagesArea.scrollHeight;
+    }
+
+    // Inicializa o chat com histórico persistente
+    loadInitialHistory();
+
+    // Botão de limpar conversa
+    if (clearChatBtn) {
+      clearChatBtn.addEventListener('click', () => {
+        if (confirm('Deseja reiniciar a conversa e limpar o histórico salvo?')) {
+          localStorage.removeItem(STORAGE_KEY);
+          window.location.reload();
+        }
+      });
     }
 
     async function sendMessage(text = '', audioBlob = null) {
